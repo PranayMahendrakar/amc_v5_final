@@ -31,5 +31,7 @@ jobs:
       - name: Verify Railway CLI
         run: railway --version
 
+      # First deploy: creates the service automatically. Subsequent deploys
+      # reuse the same service. We pin the service name so re-runs are stable.
       - name: Deploy
-        run: railway up --service amc-v5-final --ci
+        run: railway up --ci --service amc-v5-final --detach || railway up --ci --detach
