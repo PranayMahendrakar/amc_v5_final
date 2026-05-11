@@ -1,0 +1,276 @@
+# Balance Sheet — output buckets and the input aliases that feed each.
+# Direct transcription of the AskMyCFO Automation Test Requirement spec.
+#
+# Schema:
+#   <section>:
+#     <output_bucket>:
+#       aliases: [list of normalized label strings to match]
+#       section_required: "current" | "non_current"     # disambiguates polysemous labels
+#       sign: +1 | -1                                    # default +1
+#
+# Matching is done after label normalization (lowercase, punctuation stripped,
+# whitespace collapsed). Section context comes from the geometry extractor.
+
+networth:
+  share_capital:
+    aliases:
+      - "equity share capital"
+      - "share capital"
+
+  retained_earnings:
+    aliases:
+      - "retained earnings"
+      - "surplus"
+      - "balance in profit and loss"
+      - "balance in the statement of profit and loss"
+      - "balance in p&l account"
+
+  general_reserve_and_surplus:
+    aliases:
+      - "general reserve and surplus"
+      - "general reserve"
+      - "reserves and surplus"
+      - "capital reserve"
+      - "securities premium"
+      - "securities premium account"
+      - "securities premium reserve"
+
+  other_equity:
+    aliases:
+      - "other equity"
+      - "other reserves"
+      - "reserves"
+      - "share application money pending allotment"
+      - "money received against share warrants"
+      - "equity warrants"
+      - "share warrants"
+
+current_liabilities:
+  account_payable:
+    aliases:
+      - "trade payables"
+      - "trade payable"
+      - "trade payables - msme trade"
+      - "trade payables - others"
+      - "total outstanding dues of micro enterprises and small enterprises"
+      - "total outstanding dues of creditors other than micro enterprises and small enterprises"
+      - "total outstanding dues of creditors other than micro and small enterprises"
+      - "dues of micro enterprises and small enterprises"
+      - "dues of creditors other than micro enterprises and small enterprises"
+      - "dues to micro and small enterprises"
+      - "msme creditors"
+      - "sundry creditors"
+
+  provisions:
+    aliases:
+      - "provisions"
+      - "short-term provisions"
+      - "short term provisions"
+    section_required: "current"
+
+  short_term_borrowings:
+    aliases:
+      - "borrowings"
+      - "short-term borrowings"
+      - "short term borrowings"
+      - "current borrowings"
+      - "current maturities of long-term debt"
+    section_required: "current"
+
+  other_current_liabilities:
+    aliases:
+      - "other current liabilities"
+      - "deferred tax liabilities (net)"
+      - "deferred tax liabilities"
+      - "deferred tax liability"
+      - "current tax liabilities"
+      - "current tax liabilities (net)"
+
+  other_financial_liabilities:
+    aliases:
+      - "lease liabilities"
+      - "lease liability"
+      - "other financial liabilities"
+      - "other current financial liabilities"
+    section_required: "current"
+
+non_current_liabilities:
+  provisions:
+    aliases:
+      - "provisions"
+      - "long-term provisions"
+      - "long term provisions"
+    section_required: "non_current"
+
+  long_term_borrowings:
+    aliases:
+      - "borrowings"
+      - "long-term borrowings"
+      - "long term borrowings"
+      - "non-current borrowings"
+      - "non current borrowings"
+      - "term loan"
+      - "secured loans"
+      - "unsecured loans"
+      - "debentures"
+      # NBFC (Regency Fincorp): Sch III for NBFCs splits Borrowings into
+      # "Debt Securities" and "Borrowings (Other than Debt Securities)"
+      - "borrowings (other than debt securities)"
+      - "debt securities"
+      - "subordinated liabilities"
+    section_required: "non_current"
+
+  other_non_current_liabilities:
+    aliases:
+      - "other non-current liabilities"
+      - "other non current liabilities"
+      - "other long term liabilities"
+      - "deferred tax liabilities (net)"
+      - "deferred tax liabilities"
+      - "deferred tax liability"
+
+  other_financial_liabilities:
+    aliases:
+      - "lease liabilities"
+      - "other financial liabilities"
+      - "other non-current financial liabilities"
+    section_required: "non_current"
+
+current_assets:
+  bank_balance:
+    aliases:
+      - "bank balances other than cash equivalents"
+      - "bank balance other than cash equivalents"
+      - "bank balances [other than cash equivalents]"
+      - "bank balances [other than (ii) above]"
+      - "bank balance other than (ii) above"
+      - "bank balances other than (ii) above"
+      - "other bank balances"
+      - "other bank balance"
+      - "other balances with banks"
+      - "other balance with bank"
+      - "balances with banks"
+    section_required: "current"
+
+  cash_and_cash_equivalents:
+    aliases:
+      - "cash and cash equivalents"
+      - "cash & cash equivalents"
+      - "cash and bank balances"
+    section_required: "current"
+
+  inventories:
+    aliases:
+      - "inventories"
+      - "inventory"
+
+  investments:
+    aliases:
+      - "investments held for sale"
+      - "current investments"
+    section_required: "current"
+
+  loans:
+    aliases:
+      - "loans"
+      - "short-term loans and advances"
+      - "short term loan and advances"
+      - "short term loans & advances"
+      - "receivables under financing activity"
+      - "loan receivables"
+      - "loans receivable"
+      - "loans and advances"
+    section_required: "current"
+
+  account_receivables:
+    aliases:
+      - "trade receivables"
+      - "trade receivable"
+      - "sundry debtors"
+
+  other_current_assets:
+    aliases:
+      - "other current assets"
+      - "current tax assets"
+      - "current tax assets (net)"
+
+  other_financial_assets:
+    aliases:
+      - "other financial assets"
+      - "others current financial assets"
+      - "other current financial assets"
+    section_required: "current"
+
+non_current_assets:
+  fixed_assets:
+    aliases:
+      - "property plant and equipment"
+      - "property, plant and equipment"
+      - "property, plant & equipment"
+      - "property, plant & equipments"
+      - "right of use assets"
+      - "right-of-use assets"
+      - "intangible assets"
+      - "other intangible assets"
+      - "goodwill"
+
+  investments:
+    aliases:
+      - "investment property"
+      - "investments property"
+      - "investments"
+      - "non-current investments"
+      - "non- current investments"
+      - "non current investments"
+      - "financial assets - investments"
+    section_required: "non_current"
+
+  loans:
+    aliases:
+      - "loans"
+      - "long-term loans and advances"
+      - "long- term loans & advances"
+      - "long term loans and advances"
+      - "non-current loans"
+      - "financial assets - loans"
+      - "receivables under financing activity"
+      - "loan receivables"
+      - "loans receivable"
+    section_required: "non_current"
+
+  capital_work_in_progress:
+    aliases:
+      - "capital work-in-progress"
+      - "capital work in progress"
+      - "capital work-in progress"
+      - "capital workin progress"
+      - "cwip"
+
+  other_non_current_assets:
+    aliases:
+      - "other non-current assets"
+      - "other non current assets"
+      - "intangible assets under development"
+      - "biological assets other than bearer plants"
+      - "biological assets"
+      - "investment in subsidiaries"
+      - "investment in subsidiaries & associates"
+      - "investment in associates"
+      - "current tax assets (net)"
+
+  other_financial_assets:
+    aliases:
+      - "other financial assets"
+      - "financial assets - other financial assets"
+    section_required: "non_current"
+
+  deferred_tax:
+    aliases:
+      - "deferred tax assets (net)"
+      - "deferred tax assets"
+      - "deferred tax asset"
+      - "non-current tax assets"
+      - "non current tax assets"
+      - "income tax assets"
+      - "income tax assets (net)"
+      - "non-current tax assets (net)"

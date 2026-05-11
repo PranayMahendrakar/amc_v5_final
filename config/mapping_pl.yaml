@@ -1,0 +1,126 @@
+# P&L — output buckets and aliases. Notion spec rows:
+#  1. Revenue                          = Revenue from Operations + Revenue from Trading Operations
+#  2. Cost Of Goods Sold               = Cost of materials consumed + Purchases of stock-in-trade
+#                                        + Changes in inventories of FG/WIP/stock-in-trade
+#  3. Employee Expenses                = Employee benefits expense
+#  4. Interest                         = Finance costs
+#  5. Depreciation                     = Depreciation and amortisation expense
+#  6. Other Expenses less Other Income = (Other Income - Other Expenses)    <-- net, signed
+#  7. Taxes                            = Current Tax + MAT Credit + Deferred Tax + adjustments
+
+profit_and_loss:
+  revenue:
+    aliases:
+      - "revenue from operations"
+      - "revenue from trading operations"
+      - "sale of products"
+      - "sale of services"
+      - "revenue"
+      - "income from operations"
+      # NBFC / Insurance revenue line items (Regency Fincorp, etc.)
+      - "interest income"
+      - "fees and commission income"
+      - "fee and commission income"
+      - "net gain on fair value changes"
+      - "net gain on derecognition of financial instruments"
+      - "rental income"
+      - "dividend income"
+      - "other operating income"
+      - "total revenue from operations"
+
+  cost_of_goods_sold:
+    aliases:
+      - "cost of materials consumed"
+      - "cost of raw materials and components consumed"
+      - "cost of raw materials consumed"
+      - "consumption of raw materials"
+      - "consumption of stores and spares"
+      - "purchases of stock-in-trade"
+      - "purchase of stock-in-trade"
+      - "purchase of traded goods"
+      - "changes in inventories of finished goods"
+      - "changes in inventories of finished goods, work-in-progress and stock-in-trade"
+      - "changes in inventories of finished goods/wip/stock-in-trade"
+      - "changes in inventories of fg & wip"
+      - "changes in inventories of traded goods"
+      - "changes in inventory"
+      # Madhav Infra (construction company) uses these instead of standard CoGS
+      - "construction expenses"
+      - "changes in construction work in progress"
+      - "changes in construction work-in-progress"
+      # NBFC-specific
+      - "fees and commission expense"
+      - "fee and commission expense"
+
+  employee_expenses:
+    aliases:
+      - "employee benefits expense"
+      - "employee benefit expense"
+      - "employees benefits expense"
+      - "personnel costs"
+      - "personnel expenses"
+      - "staff costs"
+
+  interest:
+    aliases:
+      - "finance costs"
+      - "finance cost"
+      - "interest expense"
+      - "interest"
+      - "borrowing costs"
+      - "interest on borrowings"
+
+  depreciation:
+    aliases:
+      - "depreciation and amortisation expense"
+      - "depreciation and amortization expense"
+      - "depreciation, amortisation and impairment"
+      - "depreciation and amortisation"
+      - "depreciation"
+
+  # Net = (Other Income - Other Expenses). Two component buckets feed in with
+  # opposite signs; aggregator handles the netting.
+  other_expenses_less_other_income:
+    components:
+      other_income:
+        sign: +1
+        aliases:
+          - "other income"
+      other_expenses:
+        sign: -1
+        aliases:
+          - "other expenses"
+          - "other expense"
+          - "miscellaneous expenses"
+          - "other operating expenses"
+          - "business origination outsourcing"
+          - "provisions and loan losses"
+          - "provision for loan losses"
+          - "impairment on financial instruments"
+          - "impairment losses on financial instruments"
+
+  taxes:
+    aliases:
+      - "current tax"
+      - "mat credit"
+      - "mat credit (entitlement)/reversal"
+      - "mat credit entitlement"
+      - "deferred tax"
+      - "deferred tax charge"
+      - "deferred tax charge/(benefit)"
+      - "deferred tax income-earlier years"
+      - "deferred tax income"
+      - "current tax for prior periods"
+      - "current tax/tax for prior periods"
+      - "tax for earlier years"
+      - "earlier years tax"
+      - "earlier years' tax"
+      - "tax adjustment for earlier years"
+      - "adjustment of tax relating to earlier periods"
+      - "short / (excess) provision for tax relating to prior years"
+      - "short / (excess) provision for tax"
+      - "(c) short / (excess) provision for tax relating to prior years"
+      - "tax expense"
+      - "income tax expense"
+      - "total tax expense"
+      - "total tax expenses"

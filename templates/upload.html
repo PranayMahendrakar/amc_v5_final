@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Upload an annual report{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <p class="kicker">A standing assignment for the audit desk</p>
+      <h1 class="headline">From a 269-page annual report to a balanced 26-row template — in under a second.</h1>
+      <p class="deck">
+        Upload an Indian annual report PDF. AskMyCFO locates the Balance Sheet
+        and Statement of Profit &amp; Loss, extracts every line in their exact
+        geometric position, and lays them into the standardised template you
+        specified. No LLM. No API calls. Just pure spans, columns, and rules.
+      </p>
+      <dl class="stats">
+        <div><dt>Pages parsed</dt><dd>any</dd></div>
+        <div><dt>Cost per report</dt><dd>₹0</dd></div>
+        <div><dt>Latency</dt><dd>&lt; 1&nbsp;s</dd></div>
+        <div><dt>Approach</dt><dd>deterministic</dd></div>
+      </dl>
+    </div>
+
+    <form class="dropzone" method="POST" action="{{ url_for('upload') }}"
+          enctype="multipart/form-data" id="dropForm">
+      <label for="fileInput" class="dropzone-label">
+        <div class="dropzone-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M14 50V14h22l12 12v24z"/>
+            <path d="M36 14v12h12"/>
+            <path d="M22 36h20M22 42h20M22 30h12"/>
+          </svg>
+        </div>
+        <div class="dropzone-text">
+          <strong>Drop a PDF here</strong>
+          <span>or click to choose · standalone annual report</span>
+        </div>
+        <input type="file" name="pdf" id="fileInput" accept="application/pdf" required>
+      </label>
+      <div class="dropzone-filename" id="fileName" aria-live="polite"></div>
+
+      <button type="submit" class="btn-primary">
+        <span>Run extraction</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </button>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+    </form>
+  </div>
+</section>
+
+{% if recent_jobs %}
+<section class="archive-strip">
+  <div class="archive-head">
+    <h2 class="section-title">Recent extractions</h2>
+    <a href="{{ url_for('jobs') }}" class="more-link">All →</a>
+  </div>
+  <ul class="archive-list">
+    {% for j in recent_jobs %}
+    <li>
+      <a href="{{ url_for('job_view', job_id=j.id) }}">
+        <span class="archive-file">{{ j.filename }}</span>
+        <span class="archive-pages">pp. {{ j.pages|join(", ") }}</span>
+        <span class="archive-total">₹ {{ j.total_assets_cy|inr }}</span>
+        <span class="archive-status {% if j.balanced_cy and j.balanced_py %}is-balanced{% else %}is-off{% endif %}">
+          {% if j.balanced_cy and j.balanced_py %}✓ balanced{% else %}Δ {{ j.difference_cy|inr }}{% endif %}
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="methodology">
+  <h2 class="section-title">How the extraction works</h2>
+  <ol class="method-list">
+    <li>
+      <span class="step-num">01</span>
+      <h3>Locate</h3>
+      <p>Two-layer detection. Canonical headline match (e.g. <em>“Balance Sheet
+      as at March 31, 2025”</em>) for the common case; structural fingerprint
+      (Particulars + dual <em>As at</em> headers + Equity/Assets anchors) for
+      headerless pages that ship with no title.</p>
+    </li>
+    <li>
+      <span class="step-num">02</span>
+      <h3>Extract</h3>
+      <p>Span-level PyMuPDF geometry. Numeric tokens form right-edge clusters
+      that define columns. Rows are Y-banded. A 25%-of-page-width gap
+      triggers side-by-side spread mode, splitting at the physical page
+      midpoint. Unlabeled Schedule III subtotals are preserved, not eaten.</p>
+    </li>
+    <li>
+      <span class="step-num">03</span>
+      <h3>Classify</h3>
+      <p>A YAML alias dictionary maps every label to one of the spec's 26
+      buckets. Section context disambiguates polysemous labels (current vs
+      non-current Borrowings). RapidFuzz token-set fallback catches typos.
+      No model in the loop — every classification is auditable.</p>
+    </li>
+    <li>
+      <span class="step-num">04</span>
+      <h3>Verify</h3>
+      <p>Sum into the template, compute Total Assets and Total
+      Liabilities&nbsp;+&nbsp;Equity, and flag any gap above the ₹1 tolerance.
+      Outputs a trimmed source PDF you can open side-by-side with the
+      computed template to verify every number visually.</p>
+    </li>
+  </ol>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Filename echo + drag-drop polish
+  const inp = document.getElementById('fileInput');
+  const lbl = document.querySelector('.dropzone-label');
+  const fname = document.getElementById('fileName');
+  if (inp) {
+    inp.addEventListener('change', () => {
+      fname.textContent = inp.files[0] ? inp.files[0].name : '';
+    });
+  }
+  if (lbl) {
+    ['dragenter','dragover'].forEach(e => lbl.addEventListener(e, ev => {
+      ev.preventDefault(); lbl.classList.add('is-dragover');
+    }));
+    ['dragleave','drop'].forEach(e => lbl.addEventListener(e, ev => {
+      ev.preventDefault(); lbl.classList.remove('is-dragover');
+    }));
+    lbl.addEventListener('drop', ev => {
+      ev.preventDefault();
+      if (ev.dataTransfer.files.length) {
+        inp.files = ev.dataTransfer.files;
+        fname.textContent = ev.dataTransfer.files[0].name;
+      }
+    });
+  }
+</script>
+{% endblock %}

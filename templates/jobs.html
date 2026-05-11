@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Archive{% endblock %}
+{% block content %}
+<section class="archive-page">
+  <div class="archive-header">
+    <p class="kicker">All extractions, newest first</p>
+    <h1 class="headline">Archive</h1>
+  </div>
+
+  {% if jobs %}
+  <table class="archive-table">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Pages</th>
+        <th class="num">Total assets (CY)</th>
+        <th>Balance</th>
+        <th>Uploaded</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for j in jobs %}
+      <tr>
+        <td class="archive-file"><a href="{{ url_for('job_view', job_id=j.id) }}">{{ j.filename }}</a></td>
+        <td>{{ j.pages|join(", ") }}</td>
+        <td class="num">{{ j.total_assets_cy|inr }}</td>
+        <td>
+          {% if j.balanced_cy and j.balanced_py %}
+            <span class="balance-tag is-balanced">✓ balanced</span>
+          {% else %}
+            <span class="balance-tag is-off">Δ {{ j.difference_cy|inr }}</span>
+          {% endif %}
+        </td>
+        <td class="archive-when">{{ j.uploaded_at[:10] }}</td>
+        <td><a href="{{ url_for('job_view', job_id=j.id) }}" class="row-arrow">→</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No extractions yet. <a href="{{ url_for('index') }}">Upload one →</a></p>
+  {% endif %}
+</section>
+{% endblock %}

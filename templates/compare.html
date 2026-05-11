@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}{{ meta.filename or "Job" }}{% endblock %}
+
+{% block head %}
+<style>
+  body { background: var(--bg-deep); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set balanced = diag.balance_check.balanced_cy and diag.balance_check.balanced_py %}
+
+<article class="report-shell">
+  <!-- Title block -->
+  <header class="report-header">
+    <div class="report-header-left">
+      <p class="kicker">Extraction · Job {{ job_id }}</p>
+      <h1 class="report-title">{{ meta.filename or "Annual report" }}</h1>
+      <p class="report-meta">
+        <span>Located <strong>{{ diag.pages_located|length }}</strong> page{{ "s" if diag.pages_located|length != 1 else "" }}:
+          {% for p in diag.pages_located %}<span class="pg-pill {{ 'is-bs' if p.kind=='BS' else 'is-pl' }}">p.{{ p.page }} · {{ p.kind }}{% if p.variant != 'default' %} <em>{{ p.variant }}</em>{% endif %}</span>{% endfor %}
+        </span>
+        <span class="dot">·</span>
+        <span>{{ "%.2f s"|format(diag.timing_seconds.locate + diag.timing_seconds.extract + diag.timing_seconds.classify_aggregate) }} elapsed</span>
+      </p>
+    </div>
+    <div class="report-header-right">
+      <div class="balance-badge {% if balanced %}is-balanced{% else %}is-off{% endif %}">
+        {% if balanced %}
+          <span class="bb-mark">✓</span>
+          <span class="bb-text"><strong>Balances</strong><br><em>both years, zero gap</em></span>
+        {% else %}
+          <span class="bb-mark">Δ</span>
+          <span class="bb-text"><strong>Gap detected</strong><br>
+            CY {{ diag.totals.difference[0]|inr }} · PY {{ diag.totals.difference[1]|inr }}</span>
+        {% endif %}
+      </div>
+      <div class="dl-row">
+        <a href="{{ template_csv_url }}?download=1" class="dl-chip">template.csv</a>
+        <a href="{{ raw_csv_url }}?download=1" class="dl-chip">raw_rows.csv</a>
+        <a href="{{ diag_url }}?download=1" class="dl-chip">diagnostics.json</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- The big side-by-side view -->
+  <section class="split-view" id="splitView">
+    <!-- LEFT: trimmed source PDF -->
+    <div class="split-pane split-pane--pdf">
+      <div class="pane-head">
+        <span class="pane-eyebrow">Source</span>
+        <h2 class="pane-title">Trimmed Balance Sheet &amp; P&amp;L pages</h2>
+        <a href="{{ pdf_url }}" target="_blank" class="pane-action">Open ↗</a>
+      </div>
+      <div class="pdf-frame">
+        <embed src="{{ pdf_url }}#view=FitH&toolbar=0" type="application/pdf">
+      </div>
+    </div>
+
+    <!-- RIGHT: the template table -->
+    <div class="split-pane split-pane--template">
+      <div class="pane-head">
+        <span class="pane-eyebrow">Output</span>
+        <h2 class="pane-title">Standardised template</h2>
+        <div class="tab-row">
+          <button type="button" class="tab is-active" data-tab="template">Template</button>
+          <button type="button" class="tab" data-tab="pl">P&amp;L</button>
+          <button type="button" class="tab" data-tab="raw">Raw rows ({{ raw_preview|length }})</button>
+          <button type="button" class="tab" data-tab="uncl">Unclassified ({{ diag.unclassified_count }})</button>
+        </div>
+      </div>
+
+      <!-- Tab: Template -->
+      <div class="tab-panel is-active" data-panel="template">
+        <table class="ledger">
+          <thead>
+            <tr>
+              <th class="lbl"></th>
+              <th class="num">Current year</th>
+              <th class="num">Prior year</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set bs_sections = [
+              ('Equity / Networth', 'networth',
+               ['share_capital', 'retained_earnings',
+                'general_reserve_and_surplus', 'other_equity'],
+               'total_networth'),
+              ('Current Liabilities', 'current_liabilities',
+               ['account_payable', 'provisions', 'short_term_borrowings',
+                'other_current_liabilities', 'other_financial_liabilities'],
+               'total_cl'),
+              ('Non-Current Liabilities', 'non_current_liabilities',
+               ['provisions', 'long_term_borrowings',
+                'other_non_current_liabilities', 'other_financial_liabilities'],
+               'total_ncl'),
+              ('Current Assets', 'current_assets',
+               ['bank_balance', 'cash_and_cash_equivalents', 'inventories',
+                'investments', 'loans', 'account_receivables',
+                'other_current_assets', 'other_financial_assets'],
+               'total_ca'),
+              ('Non-Current Assets', 'non_current_assets',
+               ['fixed_assets', 'investments', 'loans',
+                'capital_work_in_progress', 'other_non_current_assets',
+                'other_financial_assets', 'deferred_tax'],
+               'total_nca'),
+            ] %}
+            {% set display_names = {
+              'share_capital': 'Share Capital',
+              'retained_earnings': 'Retained Earnings',
+              'general_reserve_and_surplus': 'General Reserve and Surplus',
+              'other_equity': 'Other Equity',
+              'account_payable': 'Account Payable',
+              'provisions': 'Provisions',
+              'short_term_borrowings': 'Short Term Borrowings',
+              'other_current_liabilities': 'Other Current Liabilities',
+              'other_financial_liabilities': 'Other Financial Liabilities',
+              'long_term_borrowings': 'Long Term Borrowings',
+              'other_non_current_liabilities': 'Other Non-Current Liabilities',
+              'bank_balance': 'Bank Balance',
+              'cash_and_cash_equivalents': 'Cash & Cash Equivalents',
+              'inventories': 'Inventories',
+              'investments': 'Investments',
+              'loans': 'Loans',
+              'account_receivables': 'Account Receivables',
+              'other_current_assets': 'Other Current Assets',
+              'other_financial_assets': 'Other Financial Assets',
+              'fixed_assets': 'Fixed Assets',
+              'capital_work_in_progress': 'Capital Work in Progress',
+              'other_non_current_assets': 'Other Non-Current Assets',
+              'deferred_tax': 'Deferred Tax',
+            } %}
+            {% for section_label, section_yaml, buckets, total_key in bs_sections %}
+            <tr class="sec-head"><th colspan="3">{{ section_label }}</th></tr>
+            {% for b in diag.buckets.bs if b.section == section_yaml %}
+              {% set bk = b.bucket %}
+              <tr class="lr {% if b.cy == 0 and b.py == 0 %}is-empty{% endif %}">
+                <td class="lbl">
+                  <span class="lbl-name">{{ display_names[bk] or bk.replace('_',' ').title() }}</span>
+                  {% if b.trace_count %}<span class="lbl-tr" title="{{ b.trace_count }} source row{{ 's' if b.trace_count > 1 else '' }} aggregated">×{{ b.trace_count }}</span>{% endif %}
+                </td>
+                <td class="num">{{ b.cy|inr }}</td>
+                <td class="num">{{ b.py|inr }}</td>
+              </tr>
+            {% endfor %}
+            <tr class="sec-total">
+              <td class="lbl">Total {{ section_label }}</td>
+              <td class="num">{{ diag.totals[total_key][0]|inr }}</td>
+              <td class="num">{{ diag.totals[total_key][1]|inr }}</td>
+            </tr>
+            {% endfor %}
+
+            <tr class="grand-total">
+              <td class="lbl">Total Liabilities (Networth + CL + NCL)</td>
+              <td class="num">{{ diag.totals.total_liabilities[0]|inr }}</td>
+              <td class="num">{{ diag.totals.total_liabilities[1]|inr }}</td>
+            </tr>
+            <tr class="grand-total">
+              <td class="lbl">Total Assets (CA + NCA)</td>
+              <td class="num">{{ diag.totals.total_assets[0]|inr }}</td>
+              <td class="num">{{ diag.totals.total_assets[1]|inr }}</td>
+            </tr>
+            <tr class="diff-row {% if balanced %}is-balanced{% else %}is-off{% endif %}">
+              <td class="lbl">Difference (L − A)</td>
+              <td class="num">{{ diag.totals.difference[0]|inr }}</td>
+              <td class="num">{{ diag.totals.difference[1]|inr }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab: P&L -->
+      <div class="tab-panel" data-panel="pl">
+        <table class="ledger">
+          <thead>
+            <tr>
+              <th class="lbl"></th>
+              <th class="num">Current year</th>
+              <th class="num">Prior year</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="sec-head"><th colspan="3">Statement of Profit &amp; Loss</th></tr>
+            {% set pl_display = {
+              'revenue':'Revenue',
+              'cost_of_goods_sold':'Cost Of Goods Sold',
+              'employee_expenses':'Employee Expenses',
+              'interest':'Interest',
+              'depreciation':'Depreciation',
+              'other_expenses_less_other_income':'Other Expenses less Other Income',
+              'taxes':'Taxes',
+            } %}
+            {% for b in diag.buckets.pl %}
+            <tr class="lr {% if b.cy == 0 and b.py == 0 %}is-empty{% endif %}">
+              <td class="lbl">
+                <span class="lbl-name">{{ pl_display[b.bucket] or b.display }}</span>
+                {% if b.trace_count %}<span class="lbl-tr">×{{ b.trace_count }}</span>{% endif %}
+              </td>
+              <td class="num">{{ b.cy|inr }}</td>
+              <td class="num">{{ b.py|inr }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab: Raw rows -->
+      <div class="tab-panel" data-panel="raw">
+        <p class="tab-intro">Every row the geometry extractor pulled — the
+          contract between the PDF and the classifier. If a number looks
+          wrong below, the bug is in the extractor, not the mapping.</p>
+        <table class="raw">
+          <thead>
+            <tr>
+              <th>p.</th><th>side</th><th>section</th>
+              <th>label</th>
+              <th class="num">col 1</th><th class="num">col 2</th>
+              <th class="num">col 3</th><th class="num">col 4</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in raw_preview %}
+            <tr>
+              <td>{{ r[0] }}</td>
+              <td>{{ r[1] }}</td>
+              <td class="sec">{{ r[4] }}</td>
+              <td class="lbl">{{ r[5] }}</td>
+              <td class="num">{{ r[6] }}</td>
+              <td class="num">{{ r[7] }}</td>
+              <td class="num">{{ r[8] }}</td>
+              <td class="num">{{ r[9] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tab: Unclassified -->
+      <div class="tab-panel" data-panel="uncl">
+        {% if diag.unclassified %}
+        <p class="tab-intro">{{ diag.unclassified|length }} row{{ "s" if diag.unclassified|length != 1 else "" }} didn't match any alias. These are usually
+          intermediate subtotals (Profit Before Tax), OCI items, or per-share
+          metrics — they aren't part of the 26-bucket template and don't affect
+          the balance check. Add aliases in <code>config/mapping_*.yaml</code>
+          to bring any of these into the template.</p>
+        <table class="raw uncl">
+          <thead>
+            <tr><th>side</th><th>section</th><th>label</th>
+                <th class="num">CY</th><th class="num">PY</th></tr>
+          </thead>
+          <tbody>
+            {% for u in diag.unclassified %}
+            <tr>
+              <td>{{ u.side }}</td>
+              <td class="sec">{{ u.section }}</td>
+              <td class="lbl">{{ u.label }}</td>
+              <td class="num">{{ u.cy|inr }}</td>
+              <td class="num">{{ u.py|inr }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="tab-intro">No unclassified rows — every data line in this
+        report mapped cleanly to a template bucket.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Tab switching for the right-hand pane
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const key = t.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x =>
+        x.classList.toggle('is-active', x === t));
+      document.querySelectorAll('.tab-panel').forEach(p =>
+        p.classList.toggle('is-active', p.dataset.panel === key));
+    });
+  });
+</script>
+{% endblock %}

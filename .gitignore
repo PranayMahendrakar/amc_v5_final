@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+data/jobs/*
+data/uploads/*
+!data/jobs/.gitkeep
+!data/uploads/.gitkeep
+.venv/
+.env
