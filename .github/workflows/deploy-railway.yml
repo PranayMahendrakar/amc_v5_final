@@ -14,6 +14,7 @@ jobs:
     name: Build & deploy to Railway
     runs-on: ubuntu-latest
     env:
+      # Project token: auto-scopes the CLI to this project + environment.
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - name: Checkout
@@ -29,9 +30,6 @@ jobs:
 
       - name: Verify Railway CLI
         run: railway --version
-
-      - name: Link project
-        run: railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment production
 
       - name: Deploy
         run: railway up --service amc-v5-final --ci
